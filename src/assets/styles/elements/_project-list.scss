@@ -1,0 +1,20 @@
+.projects-list-item {
+  padding: 20px;
+}
+
+.projects-list-item-inner {
+  $space: 150px;
+  padding-left: $space;
+  min-height: 120px;
+
+  .projects-list-item-image {
+    float: left;
+    margin-left: -$space;
+  }
+}
+
+.projects-list-item-image {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+}

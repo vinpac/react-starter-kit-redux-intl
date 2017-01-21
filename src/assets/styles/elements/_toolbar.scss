@@ -1,0 +1,73 @@
+.toolbar {
+  background: #FFF;
+  transition: background .2s ease-in-out, box-shadow .2s ease-in-out;
+
+  .navbar-brand {
+    font-size: 30px;
+    color: $text-muted;
+    font-weight: bold;
+    transition: color .2s;
+
+    &:hover {
+      color: $text-color-base;
+    }
+  }
+
+  .dropdown-menu {
+    color: $text-color-base;
+
+    .dropdown-link:first-child {
+      padding-top: 1rem;
+    }
+
+    .dropdown-link:last-child {
+      padding-bottom: 1rem;
+    }
+  }
+}
+
+.toolbar-navbar {
+  padding: 0;
+
+
+  .nav-link {
+    $indicator-height: 3px;
+
+    padding: 15px 10px;
+    font-size: 18px;
+    font-weight: $text-semibold-weight;
+
+    &.active {
+      box-shadow:inset 0 $indicator-height*-1 #FFF;
+    }
+  }
+
+  &.navbar-default .nav-link.active {
+    color: $text-color-base;
+  }
+
+}
+
+.toolbar-bars {
+  font-size: 21px;
+  padding: .88rem;
+}
+
+.toolbar-fixed {
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  z-index: 100;
+}
+
+.toolbar-light {
+  .navbar-brand {
+    color: #fff;
+  }
+}
+
+.toolbar-transparent {
+  background: rgba(#FFF, 0);
+  box-shadow: none;
+}

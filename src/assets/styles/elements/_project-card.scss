@@ -1,0 +1,151 @@
+$project-card-label-bg: #586BE9;
+
+.project-card {
+  width: 100%;
+
+  &:hover {
+    .project-card-label {
+      background: darken($project-card-label-bg, 4%);
+    }
+
+    .project-card-label-hover {
+      width: 22px;
+      opacity: 1;
+      transition: all .4s;
+    }
+  }
+
+  @include media-breakpoint-up (sm) {
+    max-width: 350px;
+  }
+
+  @include media-breakpoint-up(lg) {
+    max-width: 360px;
+  }
+
+}
+
+.project-card-inner {
+  background: #f8f8f9;
+  height: 435px;
+}
+
+.project-card-thumbnail {
+  background: rgba(#000, .05);
+  height: 200px;
+  position: relative;
+  display: block;
+  background-size: cover;
+  background-position: center;
+
+  @include hover-focus {
+    text-decoration: none;
+  }
+}
+
+.project-card-label {
+  transition: all .4s;
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  border-radius: 16px;
+  background: $project-card-label-bg;
+  color: #fff;
+  line-height: 1;
+  height: 32px;
+  font-size: 14px;
+  font-weight: $text-semibold-weight;
+  padding: 10px 12px;
+  user-select: none;
+  display: block;
+
+  img {
+    display: inline-block;
+    position: relative;
+    top: -4px;
+    margin-right: 5px;
+    float: left;
+  }
+
+  > span {
+    display: inline-block;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .project-card-label-hover,
+  .project-card-label-focus {
+    width: 0;
+    overflow: hidden;
+    opacity: 0;
+  }
+
+  .project-card-label-hover {
+    transition: all .1s;
+  }
+
+  &:hover {
+    cursor: pointer;
+    background: darken($project-card-label-bg, 6%);
+
+    .project-card-label-focus-hidden,
+    .project-card-label-hover {
+      transition: 0;
+      width: 0;
+      opacity: 0;
+    }
+
+    .project-card-label-focus {
+      transition: all .4s;
+      width: 80px;
+      opacity: 1;
+    }
+  }
+
+  @include hover-focus {
+    color: #fff;
+  }
+}
+
+.project-card-block {
+  padding: 20px;
+}
+
+.project-card-title {
+  font-size: 18px;
+  margin-bottom: .6rem;
+  display: block;
+  word-wrap: break-word;
+}
+
+@include text-emphasis-variant('.project-card-title', $text-color-base);
+
+.project-card-subtitle {
+  margin-top: -.3rem;
+  margin-bottom: .6rem;
+  font-size: 15px;
+}
+
+.project-card-description {
+  height: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.project-card-footer {
+  margin-top: 1.5rem;
+  font-size: 14px;
+
+  .nav-item {
+    width: 50%;
+    margin: 0;
+    vertical-align: top;
+    color: #3D3D66;
+
+    @include text-truncate();
+
+    &:first-child {
+      padding-right: 15px;
+    }
+  }
+}

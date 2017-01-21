@@ -8,6 +8,10 @@
  */
 
 import React, { Children, PropTypes } from 'react';
+import moment from 'moment';
+import s from '../assets/styles/app.scss';
+import { getCurrentLocale } from '../intl';
+
 
 const ContextType = {
   // Enables critical path CSS rendering
@@ -55,6 +59,12 @@ class App extends React.PureComponent {
 
   getChildContext() {
     return this.props.context;
+  }
+
+  componentWillMount() {
+    const { insertCss } = this.props.context;
+    moment.locale(getCurrentLocale());
+    insertCss(s);
   }
 
   render() {

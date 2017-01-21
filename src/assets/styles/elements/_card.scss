@@ -1,0 +1,17 @@
+.card-header {
+  font-weight: $text-semibold-weight;
+
+  .btn {
+    margin: -.4rem;
+
+    > i {
+      font-size: 1.3rem;
+      position: relative;
+      top: 2px;
+    }
+  }
+}
+
+.card .list {
+  border-width: 0;
+}

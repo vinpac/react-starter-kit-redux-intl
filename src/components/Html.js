@@ -9,37 +9,60 @@
 
 import React, { PropTypes } from 'react';
 import serialize from 'serialize-javascript';
-import { analytics } from '../config';
+import { analytics, maps } from '../config';
 
 class Html extends React.Component {
   static propTypes = {
     title: PropTypes.string.isRequired,
     description: PropTypes.string.isRequired,
+    image: PropTypes.string,
+    locale: PropTypes.string,
     style: PropTypes.string,
     scripts: PropTypes.arrayOf(PropTypes.string.isRequired),
     state: PropTypes.object,
+    intlState: PropTypes.object,
     children: PropTypes.string,
   };
 
   render() {
-    const { title, description, style, scripts, state, children } = this.props;
+    const {
+      title,
+      description,
+      image,
+      style,
+      locale,
+      scripts,
+      state,
+      intlState,
+      children,
+    } = this.props;
     return (
-      <html className="no-js" lang="en">
+      <html className="no-js" lang={locale}>
         <head>
           <meta charSet="utf-8" />
           <meta httpEquiv="x-ua-compatible" content="ie=edge" />
           <title>{title}</title>
           <meta name="description" content={description} />
+          <meta name="image" content={image} />
           <meta name="viewport" content="width=device-width, initial-scale=1" />
           <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+          <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,600,700" rel="stylesheet" />
           {style && <style id="css" dangerouslySetInnerHTML={{ __html: style }} />}
         </head>
         <body>
           <div id="app" dangerouslySetInnerHTML={{ __html: children }} />
+
+          { maps.google.apiId &&
+            <script
+              src={`https://maps.googleapis.com/maps/api/js?key=${maps.google.apiId}&libraries=places&language=${locale}`}
+            />
+          }
           {state && (
             <script
               dangerouslySetInnerHTML={{ __html:
-              `window.APP_STATE=${serialize(state, { isJSON: true })}` }}
+              `
+              window.APP_STATE=${serialize(state, { isJSON: true })}
+              window.APP_INTL=${serialize(intlState, { isJSON: true })}` }}
             />
           )}
           {scripts && scripts.map(script => <script key={script} src={script} />)}

@@ -1,0 +1,23 @@
+@mixin tag-variant($parent, $bg, $bg-active: darken($bg, 5%)) {
+  #{$parent} {
+    background: $bg;
+  }
+
+  a#{$parent} {
+    @include hover-focus {
+      color: $bg-active !important;
+      text-decoration: none;
+    }
+  }
+}
+
+.tag {
+  display: inline-block;
+  border-radius: $border-radius;
+  background: $text-muted;
+  padding: .22rem .5rem;
+  color: #fff;
+}
+
+@include tag-variant('.tag-warning', $color-warning);
+

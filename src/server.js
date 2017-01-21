@@ -8,29 +8,30 @@
  */
 
 import 'babel-polyfill';
-import path from 'path';
-import express from 'express';
-import cookieParser from 'cookie-parser';
 import bodyParser from 'body-parser';
-import expressJwt from 'express-jwt';
-import expressGraphQL from 'express-graphql';
-import jwt from 'jsonwebtoken';
+import connectRedis from 'connect-redis';
+import cookieParser from 'cookie-parser';
+import express from 'express';
+import expressSession from 'express-session';
+import path from 'path';
+import PrettyError from 'pretty-error';
 import React from 'react';
 import ReactDOM from 'react-dom/server';
 import UniversalRouter from 'universal-router';
-import PrettyError from 'pretty-error';
+import assets from './assets'; // eslint-disable-line import/no-unresolved
+import { DEFAULT_LOCALE } from './common/constants';
 import App from './components/App';
 import Html from './components/Html';
-import { ErrorPageWithoutStyle } from './routes/error/ErrorPage';
-import errorPageStyle from './routes/error/ErrorPage.css';
+import { __PROD__, port, sessionKey, sessionSecret } from './config';
+import configureAuthentication from './core/configureAuthentication';
+import configureIntlMiddleware, {
+  getLocaleMessages,
+} from './core/configureIntlMiddleware';
 import passport from './core/passport';
-import models from './data/models';
-import schema from './data/schema';
+import { getAllIntlMesssages, setupIntl } from './intl';
+import configureStore from './redux/store/configureStore';
 import routes from './routes';
-import assets from './assets'; // eslint-disable-line import/no-unresolved
-import configureStore from './store/configureStore';
-import { setRuntimeVariable } from './actions/runtime';
-import { port, auth } from './config';
+import ErrorPage from './routes/error/ErrorPage';
 
 const app = express();
 
@@ -44,62 +45,58 @@ global.navigator.userAgent = global.navigator.userAgent || 'all';
 //
 // Register Node.js middleware
 // -----------------------------------------------------------------------------
+const RedisStore = connectRedis(expressSession);
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(expressSession({
+  name: sessionKey,
+  secret: sessionSecret,
+  store: new RedisStore(),
+  resave: true,
+  saveUninitialized: true,
+  rolling: true,
+  cookie: {
+    httpOnly: false,
+    secure: false,
+    maxAge: 86400000,
+  },
+}));
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+configureIntlMiddleware(app);
 
 //
 // Authentication
 // -----------------------------------------------------------------------------
-app.use(expressJwt({
-  secret: auth.jwt.secret,
-  credentialsRequired: false,
-  getToken: req => req.cookies.id_token,
-}));
 app.use(passport.initialize());
+app.use(passport.session());
+configureAuthentication(app, passport);
 
-if (process.env.NODE_ENV !== 'production') {
+if (__PROD__) {
   app.enable('trust proxy');
 }
-app.get('/login/facebook',
-  passport.authenticate('facebook', { scope: ['email', 'user_location'], session: false }),
-);
-app.get('/login/facebook/return',
-  passport.authenticate('facebook', { failureRedirect: '/login', session: false }),
-  (req, res) => {
-    const expiresIn = 60 * 60 * 24 * 180; // 180 days
-    const token = jwt.sign(req.user, auth.jwt.secret, { expiresIn });
-    res.cookie('id_token', token, { maxAge: 1000 * expiresIn, httpOnly: true });
-    res.redirect('/');
-  },
-);
-
-//
-// Register API middleware
-// -----------------------------------------------------------------------------
-app.use('/graphql', expressGraphQL(req => ({
-  schema,
-  graphiql: process.env.NODE_ENV !== 'production',
-  rootValue: { request: req },
-  pretty: process.env.NODE_ENV !== 'production',
-})));
 
 //
 // Register server-side rendering middleware
 // -----------------------------------------------------------------------------
 app.get('*', async (req, res, next) => {
+  const locale = req.session.locale || DEFAULT_LOCALE;
+  setupIntl({
+    locale,
+    messages: getLocaleMessages(locale),
+  });
+
   try {
     const store = configureStore({
-      user: req.user || null,
+      router: {
+        location: { pathname: req.path, query: req.query },
+      },
+      auth: {
+        user: req.user || null,
+      },
     }, {
       cookie: req.headers.cookie,
     });
-
-    store.dispatch(setRuntimeVariable({
-      name: 'initialNow',
-      value: Date.now(),
-    }));
 
     const css = new Set();
 
@@ -129,12 +126,16 @@ app.get('*', async (req, res, next) => {
     }
 
     const data = { ...route };
-    data.children = ReactDOM.renderToString(<App context={context}>{route.component}</App>);
+    data.children = ReactDOM.renderToString(
+      <App context={context}>{route.component}</App>,
+    );
     data.style = [...css].join('');
     data.scripts = [
       assets.vendor.js,
       assets.client.js,
     ];
+    data.locale = locale;
+    data.intlState = { locale, messages: getAllIntlMesssages() };
     data.state = context.store.getState();
     if (assets[route.chunk]) {
       data.scripts.push(assets[route.chunk].js);
@@ -161,9 +162,8 @@ app.use((err, req, res, next) => { // eslint-disable-line no-unused-vars
     <Html
       title="Internal Server Error"
       description={err.message}
-      style={errorPageStyle._getCss()} // eslint-disable-line no-underscore-dangle
     >
-      {ReactDOM.renderToString(<ErrorPageWithoutStyle error={err} />)}
+      {ReactDOM.renderToString(<ErrorPage error={err} />)}
     </Html>,
   );
   res.status(err.status || 500);
@@ -174,9 +174,7 @@ app.use((err, req, res, next) => { // eslint-disable-line no-unused-vars
 // Launch the server
 // -----------------------------------------------------------------------------
 /* eslint-disable no-console */
-models.sync().catch(err => console.error(err.stack)).then(() => {
-  app.listen(port, () => {
-    console.log(`The server is running at http://localhost:${port}/`);
-  });
+app.listen(port, () => {
+  console.log(`The server is running at http://localhost:${port}/`);
 });
 /* eslint-enable no-console */

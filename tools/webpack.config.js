@@ -11,6 +11,7 @@ import path from 'path';
 import webpack from 'webpack';
 import extend from 'extend';
 import AssetsPlugin from 'assets-webpack-plugin';
+import { globals } from '../src/config';
 
 const isDebug = !process.argv.includes('--release');
 const isVerbose = process.argv.includes('--verbose');
@@ -75,6 +76,19 @@ const config = {
             ],
           ],
         },
+      },
+      {
+        test: /\.scss$/,
+        loaders: [
+          'isomorphic-style-loader',
+          `css-loader?${JSON.stringify({
+            sourceMap: isDebug,
+            minimize: !isDebug,
+            discardComments: { removeAll: true },
+          })}`,
+          'postcss-loader?pack=default',
+          'sass-loader',
+        ],
       },
       {
         test: /\.css/,
@@ -234,9 +248,8 @@ const clientConfig = extend(true, {}, config, {
     // Define free variables
     // https://webpack.github.io/docs/list-of-plugins.html#defineplugin
     new webpack.DefinePlugin({
-      'process.env.NODE_ENV': isDebug ? '"development"' : '"production"',
+      ...globals,
       'process.env.BROWSER': true,
-      __DEV__: isDebug,
     }),
 
     // Emit a file with assets paths
@@ -329,9 +342,8 @@ const serverConfig = extend(true, {}, config, {
     // Define free variables
     // https://webpack.github.io/docs/list-of-plugins.html#defineplugin
     new webpack.DefinePlugin({
-      'process.env.NODE_ENV': isDebug ? '"development"' : '"production"',
+      ...globals,
       'process.env.BROWSER': false,
-      __DEV__: isDebug,
     }),
 
     // Do not create separate chunks of the server bundle

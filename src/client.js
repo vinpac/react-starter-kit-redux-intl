@@ -16,8 +16,10 @@ import queryString from 'query-string';
 import { createPath } from 'history/PathUtils';
 import history from './core/history';
 import App from './components/App';
-import configureStore from './store/configureStore';
+import configureStore from './redux/store/configureStore';
 import { ErrorReporter, deepForceUpdate } from './core/devUtils';
+import { setupIntl } from './intl';
+import devHotIntl from './intl/devHotIntl';
 
 // Global (context) variables that can be easily accessed from any React component
 // https://facebook.github.io/react/docs/context.html
@@ -33,6 +35,9 @@ const context = {
   // http://redux.js.org/docs/basics/UsageWithReact.html
   store: configureStore(window.APP_STATE, { history }),
 };
+
+// Set up Intl
+setupIntl(window.APP_INTL);
 
 function updateTag(tagName, keyName, keyValue, attrName, attrValue) {
   const node = document.head.querySelector(`${tagName}[${keyName}="${keyValue}"]`);
@@ -73,6 +78,7 @@ let onRenderComplete = function initialRenderComplete() {
     document.title = route.title;
 
     updateMeta('description', route.description);
+    updateMeta('image', route.image);
     // Update necessary tags in <head> at runtime here, ie:
     // updateMeta('keywords', route.keywords);
     // updateCustomMeta('og:url', route.canonicalUrl);
@@ -181,6 +187,7 @@ async function onLocationChange(location) {
 history.listen(onLocationChange);
 onLocationChange(currentLocation);
 
+
 // Enable Hot Module Replacement (HMR)
 if (module.hot) {
   module.hot.accept('./routes', () => {
@@ -201,3 +208,16 @@ if (module.hot) {
     onLocationChange(currentLocation);
   });
 }
+// Enable Hot Intl Replacement
+devHotIntl(() => {
+  if (appInstance) {
+    try {
+      // Force-update the whole tree, including components that refuse to update
+      deepForceUpdate(appInstance);
+    } catch (error) {
+      appInstance = null;
+      document.title = `Hot Update Error: ${error.message}`;
+      ReactDOM.render(<ErrorReporter error={error} />, container);
+    }
+  }
+});
